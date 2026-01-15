@@ -10,7 +10,7 @@ namespace LottiePlugin.UI
     public sealed class AnimatedImage : MonoBehaviour
     {
         [System.Serializable]
-        public class AnimationEvent : UnityEvent<AnimatedImage> {}
+        public class AnimationEvent : UnityEvent<AnimatedImage> { }
 
         public AnimationEvent Started = new AnimationEvent();
         public AnimationEvent Paused = new AnimationEvent();
@@ -43,10 +43,7 @@ namespace LottiePlugin.UI
         {
             Transform = transform;
             _waitForEndOfFrame = new WaitForEndOfFrame();
-        }
 
-        private void Start()
-        {
             if (_animationJson == null)
             {
                 return;
@@ -55,13 +52,63 @@ namespace LottiePlugin.UI
             {
                 _rawImage = GetComponent<RawImage>();
             }
-            CreateIfNeededAndReturnLottieAnimation();
-            _lottieAnimation.DrawOneFrame(0);
+        }
+
+        private void OnEnable()
+        {
+            EnsureInitialized();
+
+            if (_lottieAnimation == null)
+                return;
+
+            ResetVisualToStartFrame();
+
             if (_playOnAwake && Application.isPlaying)
             {
                 Play();
             }
         }
+
+        private void OnDisable()
+        {
+            StopRenderCoroutineOnly();
+
+            ResetVisualToStartFrame();
+        }
+
+        private void EnsureInitialized()
+        {
+            if (_animationJson == null)
+                return;
+
+            if (_rawImage == null)
+                _rawImage = GetComponent<RawImage>();
+
+            CreateIfNeededAndReturnLottieAnimation();
+        }
+
+        private void StopRenderCoroutineOnly()
+        {
+            if (_renderLottieAnimationCoroutine != null)
+            {
+                StopCoroutine(_renderLottieAnimationCoroutine);
+                _renderLottieAnimationCoroutine = null;
+            }
+        }
+
+        private void ResetVisualToStartFrame()
+        {
+            if (_lottieAnimation == null) return;
+
+            // Put internal playback state into a known state
+            _lottieAnimation.Stop();
+
+            // Pick a deterministic frame to show while idle.
+            // For "reset on enable", use 0 always:
+            _lottieAnimation.DrawOneFrame(0);
+        }
+
+
         private void OnDestroy()
         {
             DisposeLottieAnimation();
@@ -69,13 +116,22 @@ namespace LottiePlugin.UI
 
         public void Play()
         {
-            if (_renderLottieAnimationCoroutine != null)
+            EnsureInitialized();
+            if (_lottieAnimation == null) return;
+
+            // Don't run coroutines in edit mode
+            if (!Application.isPlaying)
             {
-                StopCoroutine(_renderLottieAnimationCoroutine);
+                ResetVisualToStartFrame();
+                return;
             }
+
+            StopRenderCoroutineOnly();
+
             _lottieAnimation.Play();
             _renderLottieAnimationCoroutine = StartCoroutine(RenderLottieAnimationCoroutine());
         }
+
         public void Pause()
         {
             _lottieAnimation.Pause();
