@@ -3,6 +3,9 @@
 ![Unity version](https://img.shields.io/badge/unity-2019.4%2B-green.svg)
 ![License](https://img.shields.io/github/license/gindemit/unity-rlottie.svg)
 
+
+This is a fork of the official repo to address some issues we were having.
+
 > 🧪 **EXPERIMENTAL RELEASE AVAILABLE!**  
 > We need your help testing [v0.5.0-experimental.1](https://github.com/gindemit/unity-rlottie/releases/tag/0.5.0-experimental.1) which introduces native rendering features and WebGL support!  
 > This release moves texture updates to the native plugin layer for better performance. Please test and report any issues you encounter.
